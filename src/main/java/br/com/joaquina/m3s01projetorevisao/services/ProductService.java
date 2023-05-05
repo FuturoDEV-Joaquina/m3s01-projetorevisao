@@ -5,6 +5,8 @@ import br.com.joaquina.m3s01projetorevisao.repositories.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProductService {
@@ -16,6 +18,10 @@ public class ProductService {
     }
 
     public Product save(Product product) throws Exception {
+
+        if (product.getId() != null && !productRepository.existsById(product.getId())) {
+            throw new Exception("Product not found!");
+        }
 
         if (product.getName() == null || product.getName().isEmpty()) {
             throw new Exception("Name is required!");
@@ -33,6 +39,28 @@ public class ProductService {
 
         return product;
 
+    }
+
+    public List<Product> getAll() {
+        return productRepository.findAll();
+    }
+
+    public Product getById(Long id) throws Exception {
+        Optional<Product> productOpt = productRepository.findById(id);
+        if (productOpt.isEmpty()) {
+            throw new Exception("Product not found!");
+        }
+        return productOpt.get();
+    }
+
+    public boolean delete(Long id) throws Exception {
+        Product product = getById(id);
+        try {
+            productRepository.delete(product);
+            return true;
+        } catch (Exception e) {
+            throw new Exception("Something went wrong! BOOOMMM.");
+        }
     }
 
 }
