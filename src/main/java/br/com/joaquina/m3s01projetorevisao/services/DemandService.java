@@ -12,22 +12,23 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class DemandService {
 
+    private ProductService productService;
     private DemandRepository demandRepository;
-    private ProductRepository productRepository;
     private CustomerRepository customerRepository;
 
     public DemandService(
+            ProductService productService,
             DemandRepository demandRepository,
-            ProductRepository productRepository,
             CustomerRepository customerRepository
     ) {
+        this.productService = productService;
         this.demandRepository = demandRepository;
-        this.productRepository = productRepository;
         this.customerRepository = customerRepository;
     }
 
@@ -57,14 +58,14 @@ public class DemandService {
                 throw new Exception("Product is required!");
             }
 
-            Optional<Product> productOpt = productRepository.findById(item.getProduct().getId());
-            if (productOpt.isEmpty()) {
-                throw new Exception("Product not found!");
-            }
-            item.setProduct(productOpt.get());
+            item.setProduct(productService.getById(item.getProduct().getId()));
 
             if (item.getQty() == null || item.getQty().compareTo(BigDecimal.ZERO) <= 0) {
                 throw new Exception("Qty should be greater than ZERO!");
+            }
+
+            if (item.getProduct().getQtyStock().compareTo(item.getQty()) < 0) {
+                throw new Exception("Qty Stock insufficient!");
             }
 
             item.setPrice(item.getProduct().getPrice());
@@ -77,7 +78,24 @@ public class DemandService {
 
         demand = demandRepository.save(demand);
 
+        // Diminiuir estoque
+        for (DemandItem item : demand.getItems()) {
+            productService.substractStock(item.getProduct(), item.getQty());
+        }
+
         return demand;
+    }
+
+    public List<Demand> getAll() {
+        return demandRepository.findAll();
+    }
+
+    public Demand getById(Long id) throws Exception {
+        Optional<Demand> demandOpt = demandRepository.findById(id);
+        if (demandOpt.isEmpty()) {
+            throw new Exception("Demand not found!");
+        }
+        return demandOpt.get();
     }
 
 }

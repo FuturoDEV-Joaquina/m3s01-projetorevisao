@@ -63,4 +63,10 @@ public class ProductService {
         }
     }
 
+    public void substractStock(Product product, BigDecimal qty) throws Exception {
+        product = getById(product.getId());
+        product.setQtyStock(product.getQtyStock().subtract(qty));
+        productRepository.save(product);
+    }
+
 }
