@@ -19,17 +19,17 @@ import java.util.Optional;
 public class DemandService {
 
     private ProductService productService;
+    private CustomerService customerService;
     private DemandRepository demandRepository;
-    private CustomerRepository customerRepository;
 
     public DemandService(
             ProductService productService,
             DemandRepository demandRepository,
-            CustomerRepository customerRepository
+            CustomerService customerService
     ) {
         this.productService = productService;
+        this.customerService = customerService;
         this.demandRepository = demandRepository;
-        this.customerRepository = customerRepository;
     }
 
     public Demand create(Demand demand) throws Exception {
@@ -41,11 +41,7 @@ public class DemandService {
             throw new Exception("Customer is required!");
         }
 
-        Optional<Customer> customerOpt = customerRepository.findById(demand.getCustomer().getId());
-        if (customerOpt.isEmpty()) {
-            throw new Exception("Customer not found!");
-        }
-        demand.setCustomer(customerOpt.get());
+        demand.setCustomer(customerService.getById(demand.getCustomer().getId()));
 
         if (demand.getItems() == null || demand.getItems().isEmpty()) {
             throw new Exception("Items is required!");
